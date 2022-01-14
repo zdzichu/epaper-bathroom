@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import datetime
 import json
 import logging
 import os
@@ -31,7 +32,24 @@ class DisplaySegment:
 
 
 class ClockSegment(DisplaySegment):
-    pass
+    """ between 0600 and 0700 returns true time, then approximation """
+    
+    def _get_data_text(self):
+
+        now = datetime.datetime.now()
+
+        if now.hour >= 6 and now.hour < 7:
+            self.validity = 60
+            return f"{now.hour}:{now.minute}"
+
+        self.validity = 5*60
+
+        if now.minute >= 45:
+            return f"przed {now.hour+1}"
+        elif now.minute >= 15:
+            return f"wpół do {now.hour+1}"
+        else:
+            return f"po {now.hour}"
 
 
 class TrafficSegment(DisplaySegment):
@@ -47,4 +65,10 @@ class AirSegment(DisplaySegment):
 
 
 if __name__ == "__main__":
-    pass
+   logging.basicConfig(level=logging.DEBUG)
+   segments = [
+           ClockSegment()
+           ]
+
+   for segment in segments:
+       print(segment.get_data_text())
