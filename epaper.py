@@ -34,22 +34,26 @@ class DisplaySegment:
 class ClockSegment(DisplaySegment):
     """ between 0600 and 0700 returns true time, then approximation """
 
-    def _get_data_text(self):
+    time_display = ""
 
+    def _get_data_text(self):
+        return f"Czas: {self.time_display}"
+
+    def update(self):
         now = datetime.datetime.now()
 
         if now.hour >= 6 and now.hour < 7:
             self.validity = 60
-            return f"{now.hour}:{now.minute}"
+            self.time_display = f"{now.hour}:{now.minute}"
 
         self.validity = 5*60
 
         if now.minute >= 45:
-            return f"przed {now.hour+1}"
+            self.time_display = f"przed {now.hour+1}"
         elif now.minute >= 15:
-            return f"wpół do {now.hour+1}"
+            self.time_display = f"wpół do {now.hour+1}"
         else:
-            return f"po {now.hour}"
+            self.time_display = f"po {now.hour}"
 
 
 class TrafficSegment(DisplaySegment):
