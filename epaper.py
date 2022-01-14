@@ -20,7 +20,7 @@ class DisplaySegment:
 
         now = time.time()
         if self.last_refresh + self.validity < now:
-            logging.debug(f"Data from {self.last_refresh} older than {self.validity} seconds, refreshing")
+            logging.debug(f"{type(self)}: Data from {self.last_refresh} older than {self.validity} seconds, refreshing")
             self.update()
             self.last_refresh = now
 
@@ -33,7 +33,7 @@ class DisplaySegment:
 
 class ClockSegment(DisplaySegment):
     """ between 0600 and 0700 returns true time, then approximation """
-    
+
     def _get_data_text(self):
 
         now = datetime.datetime.now()
@@ -61,13 +61,33 @@ class WeatherSegment(DisplaySegment):
 
 
 class AirSegment(DisplaySegment):
-    pass
 
+    def text_gauge(self, value, start=0, end=200, length=30):
+        if length < 3:
+            return "[]"
+        per_character = (end - start) / (length - 2)
+        middle = (end - start) / 2
+        fill_char = "+"
+
+        gauge = "["
+        for i in range(0, length - 2):
+            gauge += fill_char
+            if i * per_character > value:
+                fill_char = " "
+            elif i * per_character >= middle:
+                fill_char = "!"
+        gauge += "]"
+
+        return gauge
+
+    def _get_data_text(self):
+        return f"{self.text_gauge(value=128, length=8)} 128%\n{self.text_gauge(value=60, length=30)} 60%"
 
 if __name__ == "__main__":
    logging.basicConfig(level=logging.DEBUG)
    segments = [
-           ClockSegment()
+           ClockSegment(),
+           AirSegment()
            ]
 
    for segment in segments:
