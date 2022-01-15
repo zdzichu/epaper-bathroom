@@ -66,7 +66,7 @@ class WeatherSegment(DisplaySegment):
 
 class AirSegment(DisplaySegment):
 
-    def text_gauge(self, value, start=0, end=200, length=30):
+    def text_gauge(self, value, start=0, end=200, length=20):
         if length < 3:
             return "[]"
         per_character = (end - start) / (length - 2)
@@ -85,7 +85,41 @@ class AirSegment(DisplaySegment):
         return gauge
 
     def _get_data_text(self):
-        return f"{self.text_gauge(value=128, length=8)} 128%\n{self.text_gauge(value=60, length=30)} 60%"
+        ret = f"{self.text_gauge(value=self.percent_pm25)} PM2,5: {self.percent_pm25}% ; "
+        ret+= f"{self.text_gauge(value=self.percent_pm10)} PM10: {self.percent_pm10}% \n "
+        ret+= f"{self.description} / {self.advice}"
+        return ret
+
+    def update(self):
+        lat = os.getenv("LATITUDE")
+        long = os.getenv("LONGITUDE")
+        self.validity = 30*60
+
+        headers = {
+                "Accept": "application/json",
+                "Accept-Language": "pl",
+                "apikey": os.getenv("AIRLY_API_KEY")
+        }
+
+        req = requests.get(f"https://airapi.airly.eu/v2/measurements/point?lat={lat}&lng={long}&l=pl",
+                headers=headers)
+        logging.debug(f'{type(self)}: API calls left for today: {req.headers["X-RateLimit-Remaining-day"]}')
+        if not req.ok:
+            logging.info(f"{type(self)}: AIRLY API call failed {req.status_code}")
+        else:
+            response = req.json()
+            self.description = response["current"]["indexes"][0]["description"]
+            self.advice = response["current"]["indexes"][0]["advice"]
+
+            for pollutants in response["current"]["standards"]:
+                if pollutants["pollutant"] == "PM25":
+                    self.percent_pm25 = pollutants["percent"]
+                elif pollutants["pollutant"] == "PM10":
+                    self.percent_pm10 = pollutants["percent"]
+
+            for measurement in response["current"]["values"]:
+                if measurement["name"] == "TEMPERATURE":
+                    self.temperature = measurement["value"]
 
 if __name__ == "__main__":
    logging.basicConfig(level=logging.DEBUG)
@@ -96,3 +130,4 @@ if __name__ == "__main__":
 
    for segment in segments:
        print(segment.get_data_text())
+       print("---")
