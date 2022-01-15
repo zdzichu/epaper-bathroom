@@ -2,7 +2,8 @@
 
 ## Traffic information
 
-* `GOOGLE_API_KEY`
+* `GOOGLE_API_KEY` - API key with access to Distance API. Note: Distance Matrix API sounds useful, 
+but does *not* allow intermediate waypoints, which is essential to provide info on alternate routes.
 
 * `TRAFFIC_FROM`
 

@@ -6,6 +6,7 @@ import logging
 import os
 import requests
 import time
+import urllib.parse
 
 class DisplaySegment:
     """ validity - time in seconds how long the data is useful """
@@ -57,7 +58,58 @@ class ClockSegment(DisplaySegment):
 
 
 class TrafficSegment(DisplaySegment):
-    pass
+    duration = {}
+
+    def update(self):
+        now = datetime.datetime.now()
+
+        if now.hour >= 6 and now.hour < 7:
+            self.validity = 60
+        else:
+            self.validity = 60*60
+            logging.debug(f"{type(self)}: Not in the morning, skipping update")
+            return
+
+        url = "https://maps.googleapis.com/maps/api/directions/json?"
+        travel_parameters = {
+            "origin": os.getenv("TRAFFIC_FROM"),
+            "destination": os.getenv("TRAFFIC_TO"),
+            "waypoints": "to be filled",
+            "departure_time": int(time.time() + 5*60),   # leave in 5 minutes
+            "mode": "driving",
+            "key":  os.getenv("GOOGLE_API_KEY")
+        }
+
+        for i_point in (1, 2):
+            travel_parameters["waypoints"] = f"via:{os.getenv(f'TRAFFIC_{i_point}_THROUGH')}"
+            req = requests.get(url=url + urllib.parse.urlencode(travel_parameters))
+            if not req.ok:
+                logging.info(f"{type(self)}: Google Traffic API call via point {i_point} failed {req.status_code}")
+            else:
+                response = req.json()
+                total_time = 0
+                for leg in response["routes"][0]["legs"]:
+                    total_time += leg["duration_in_traffic"]["value"]
+
+                self.duration[i_point] = total_time
+
+
+    def _get_data_text(self):
+        if not self.duration:
+            return
+
+        ret = "Do Pruszcza\n"
+        if self.duration[1] <= self.duration[2]:
+            mark1 = " *"
+            mark2 = "  "
+        else:
+            mark1 = "  "
+            mark2 = " *"
+
+        ret+= f"{mark1} obwodnicą {round(self.duration[1] / 60)} min\n"
+        ret+= f"{mark2} miastem   {round(self.duration[2] / 60)} min"
+
+        return ret
 
 
 class WeatherSegment(DisplaySegment):
@@ -176,6 +228,7 @@ if __name__ == "__main__":
    segments = [
            ClockSegment(),
            WeatherSegment(),
+           TrafficSegment(),
            AirSegment()
            ]
 
