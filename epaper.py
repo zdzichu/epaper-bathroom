@@ -61,8 +61,58 @@ class TrafficSegment(DisplaySegment):
 
 
 class WeatherSegment(DisplaySegment):
-    pass
+    def mps2kph(self, m_per_s):
+        return m_per_s * 3600 / 1000
 
+    def update(self):
+        lat = os.getenv("LATITUDE")
+        long = os.getenv("LONGITUDE")
+        self.validity = 6*60*60
+
+        req = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={long}&appid={os.getenv("OPENWEATHERMAP_API_KEY")}&units=metric&exclude=minutely,hourly,alerts&lang=pl')
+        if not req.ok:
+            logging.info(f"{type(self)}: OpenWeatherMap API call failed {req.status_code}")
+        else:
+            response = req.json()
+            # current weather
+            self.cur_cloud_percent = response["current"]["clouds"]
+            # airly probably have better data - from the sensors in the area
+            self.cur_temperature = response["current"]["temp"]
+            self.cur_temperature_feel = response["current"]["feels_like"]
+            self.cur_wind = self.mps2kph(response["current"]["wind_speed"])
+            #self.cur_wind_gust = self.mps2kph(response["current"]["wind_gust"])
+            self.cur_description = response["current"]["weather"][0]["description"]
+            self.cur_description_short = response["current"]["weather"][0]["main"]
+            # also "icon" and "id" may be useful
+
+            # forecast for next day
+            now = datetime.datetime.now()
+            for daily in response["daily"]:
+                forecast_date = datetime.datetime.fromtimestamp(daily["dt"])
+                tomorrow_date = now + datetime.timedelta(days=1)
+                if forecast_date.day == tomorrow_date.day:
+                    self.tomorrow_cloud_percent = daily["clouds"]
+                    self.tomorrow_temperature = daily["temp"]["day"]
+                    self.tomorrow_temperature_feel = daily["feels_like"]["day"]
+                    self.tomorrow_wind = self.mps2kph(daily["wind_speed"])
+                    self.tomorrow_wind_gust = self.mps2kph(daily["wind_gust"])
+                    self.tomorrow_description = daily["weather"][0]["description"]
+                    self.tomorrow_description_short = daily["weather"][0]["main"]
+
+    def _get_data_text(self):
+        now = datetime.datetime.now()
+        if now.hour < 20:
+            # current weather
+            ret = f"{self.cur_description_short} ({self.cur_description}) \n"
+            ret+= f"Wiatr {self.cur_wind:.0f} km/h \n"
+            ret+= f"{self.cur_temperature:.0f}°C, odczuwalna {self.cur_temperature_feel:.0f}°C"
+            return ret
+        else:
+            # forecast
+            ret = f"Jutro: {self.tomorrow_description_short} ({self.tomorrow_description}) \n"
+            ret+= f"Wiatr {self.tomorrow_wind:.0f} km/h, w porywach {self.tomorrow_wind_gust:.0f} km/h \n"
+            ret+= f"{self.tomorrow_temperature:.0f}°C, odczuwalna {self.tomorrow_temperature_feel:.0f}°C"
+            return ret
 
 class AirSegment(DisplaySegment):
 
@@ -125,6 +175,7 @@ if __name__ == "__main__":
    logging.basicConfig(level=logging.DEBUG)
    segments = [
            ClockSegment(),
+           WeatherSegment(),
            AirSegment()
            ]
 

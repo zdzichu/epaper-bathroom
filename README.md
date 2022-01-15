@@ -2,7 +2,7 @@
 
 ## Traffic information
 
-# `GOOGLE_API_KEY`
+* `GOOGLE_API_KEY`
 
 * `TRAFFIC_FROM`
 
@@ -22,7 +22,7 @@
 
 ## Weather information
 
-* `FORECASTIO_API_KEY` - forecast.io API key
+* `OPENWEATHERMAP_API_KEY` - OWM API key
 
 * `LATITUDE`
 
