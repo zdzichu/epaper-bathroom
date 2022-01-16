@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import config
+
 import datetime
 import json
 import logging
@@ -224,14 +226,15 @@ class AirSegment(DisplaySegment):
                     self.temperature = measurement["value"]
 
 if __name__ == "__main__":
-   logging.basicConfig(level=logging.DEBUG)
-   segments = [
+    config.configure_env()
+    logging.basicConfig(level=logging.DEBUG)
+    segments = [
            ClockSegment(),
            WeatherSegment(),
            TrafficSegment(),
            AirSegment()
            ]
 
-   for segment in segments:
-       print(segment.get_data_text())
-       print("---")
+    for segment in segments:
+        print(segment.get_data_text())
+        print("---")
