@@ -48,6 +48,7 @@ class ClockSegment(DisplaySegment):
         if now.hour >= 6 and now.hour < 7:
             self.validity = 60
             self.time_display = f"{now.hour}:{now.minute}"
+            return
 
         self.validity = 5*60
 
