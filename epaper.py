@@ -75,16 +75,17 @@ class TrafficSegment(DisplaySegment):
 
         url = "https://maps.googleapis.com/maps/api/directions/json?"
         travel_parameters = {
-            "origin": os.getenv("TRAFFIC_FROM"),
-            "destination": os.getenv("TRAFFIC_TO"),
+            "origin": os.getenv("TRAFFIC_FROM") or config.TRAFFIC_FROM,
+            "destination": os.getenv("TRAFFIC_TO") or config.TRAFFIC_TO,
             "waypoints": "to be filled",
             "departure_time": int(time.time() + 5*60),   # leave in 5 minutes
             "mode": "driving",
-            "key":  os.getenv("GOOGLE_API_KEY")
+            "key":  os.getenv("GOOGLE_API_KEY") or config.GOOGLE_API_KEY
         }
 
         for i_point in (1, 2):
-            travel_parameters["waypoints"] = f"via:{os.getenv(f'TRAFFIC_{i_point}_THROUGH')}"
+            through = os.getenv(f'TRAFFIC_{i_point}_THROUGH') or eval(f"config.TRAFFIC_{i_point}_THROUGH")
+            travel_parameters["waypoints"] = f"via:{through}"
             req = requests.get(url=url + urllib.parse.urlencode(travel_parameters))
             if not req.ok:
                 logging.info(f"{type(self)}: Google Traffic API call via point {i_point} failed {req.status_code}")
@@ -120,11 +121,12 @@ class WeatherSegment(DisplaySegment):
         return m_per_s * 3600 / 1000
 
     def update(self):
-        lat = os.getenv("LATITUDE")
-        long = os.getenv("LONGITUDE")
+        lat = os.getenv("LATITUDE") or config.LATITUDE
+        long = os.getenv("LONGITUDE") or config.LONGITUDE
+        owm_api_key = os.getenv("OPENWEATHERMAP_API_KEY") or config.OPENWEATHERMAP_API_KEY
         self.validity = 6*60*60
 
-        req = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={long}&appid={os.getenv("OPENWEATHERMAP_API_KEY")}&units=metric&exclude=minutely,hourly,alerts&lang=pl')
+        req = requests.get(f'https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={long}&appid={owm_api_key}&units=metric&exclude=minutely,hourly,alerts&lang=pl')
         if not req.ok:
             logging.info(f"{type(self)}: OpenWeatherMap API call failed {req.status_code}")
         else:
@@ -196,14 +198,14 @@ class AirSegment(DisplaySegment):
         return ret
 
     def update(self):
-        lat = os.getenv("LATITUDE")
-        long = os.getenv("LONGITUDE")
+        lat = os.getenv("LATITUDE") or config.LATITUDE
+        long = os.getenv("LONGITUDE") or config.LONGITUDE
         self.validity = 30*60
 
         headers = {
                 "Accept": "application/json",
                 "Accept-Language": "pl",
-                "apikey": os.getenv("AIRLY_API_KEY")
+                "apikey": os.getenv("AIRLY_API_KEY") or config.AIRLY_API_KEY
         }
 
         req = requests.get(f"https://airapi.airly.eu/v2/measurements/point?lat={lat}&lng={long}&l=pl",
@@ -227,7 +229,6 @@ class AirSegment(DisplaySegment):
                     self.temperature = measurement["value"]
 
 if __name__ == "__main__":
-    config.configure_env()
     logging.basicConfig(level=logging.DEBUG)
     segments = [
            ClockSegment(),
