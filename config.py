@@ -13,3 +13,7 @@ AIRLY_API_KEY = "…"
 
 OPENWEATHERMAP_API_KEY = "…"
 
+# the plan is to have morning high resolution information display
+# and refresh, and lower resolution during rest of the day
+# (at night potentially off)
+low_resolution = False

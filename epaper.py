@@ -45,7 +45,7 @@ class ClockSegment(DisplaySegment):
     def update(self):
         now = datetime.datetime.now()
 
-        if now.hour >= 6 and now.hour < 7:
+        if not config.low_resolution:
             self.validity = 60
             self.time_display = f"{now.hour}:{now.minute}"
             return
@@ -66,7 +66,7 @@ class TrafficSegment(DisplaySegment):
     def update(self):
         now = datetime.datetime.now()
 
-        if now.hour >= 6 and now.hour < 7:
+        if not config.low_resolution:
             self.validity = 60
         else:
             self.validity = 60*60
@@ -240,3 +240,10 @@ if __name__ == "__main__":
     for segment in segments:
         print(segment.get_data_text())
         print("---")
+
+        now = datetime.datetime.now()
+        if now.hour >= 6 and now.hour < 7:
+            config.low_resolution = False
+        else:
+            config.low_resolution = True
+
