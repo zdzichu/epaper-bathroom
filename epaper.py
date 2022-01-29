@@ -47,7 +47,7 @@ class ClockSegment(DisplaySegment):
 
         if not config.low_resolution:
             self.validity = 60
-            self.time_display = f"{now.hour}:{now.minute}"
+            self.time_display = f"{now.hour}:{now.minute:02d}"
             return
 
         self.validity = 5*60
