@@ -64,14 +64,12 @@ class TrafficSegment(DisplaySegment):
     duration = {}
 
     def update(self):
-        now = datetime.datetime.now()
-
-        if not config.low_resolution:
-            self.validity = 60
-        else:
+        if config.low_resolution:
             self.validity = 60*60
             logging.debug(f"{type(self)}: Not in the morning, skipping update")
-            return
+            return ""
+        else:
+            self.validity = 60
 
         url = "https://maps.googleapis.com/maps/api/directions/json?"
         travel_parameters = {
@@ -178,7 +176,7 @@ class AirSegment(DisplaySegment):
             return "[]"
         per_character = (end - start) / (length - 2)
         middle = (end - start) / 2
-        fill_char = "+"
+        fill_char = "#"
 
         gauge = "["
         for i in range(0, length - 2):
@@ -192,9 +190,10 @@ class AirSegment(DisplaySegment):
         return gauge
 
     def _get_data_text(self):
-        ret = f"{self.text_gauge(value=self.percent_pm25)} PM2,5: {self.percent_pm25}% ; "
-        ret+= f"{self.text_gauge(value=self.percent_pm10)} PM10: {self.percent_pm10}% \n "
-        ret+= f"{self.description} / {self.advice}"
+        ret = f"{self.text_gauge(value=self.percent_pm25)} PM2,5: {self.percent_pm25}%     "
+        ret+= f"{self.text_gauge(value=self.percent_pm10)} PM10: {self.percent_pm10}%\n"
+        ret+= f"{self.description}\n"
+        ret+= f"{self.advice}"
         return ret
 
     def update(self):
@@ -241,9 +240,9 @@ if __name__ == "__main__":
         print(segment.get_data_text())
         print("---")
 
-        now = datetime.datetime.now()
-        if now.hour >= 6 and now.hour < 7:
-            config.low_resolution = False
-        else:
-            config.low_resolution = True
+    now = datetime.datetime.now()
+    if now.hour >= 6 and now.hour < 7:
+        config.low_resolution = False
+    else:
+        config.low_resolution = True
 
