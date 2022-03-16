@@ -190,10 +190,10 @@ class AirSegment(DisplaySegment):
         return gauge
 
     def _get_data_text(self):
-        ret = f"{self.text_gauge(value=self.percent_pm25)} PM2,5: {self.percent_pm25}%     "
-        ret+= f"{self.text_gauge(value=self.percent_pm10)} PM10: {self.percent_pm10}%\n"
-        ret+= f"{self.description}\n"
-        ret+= f"{self.advice}"
+        ret = f"{self.text_gauge(value=self.percent_pm25)} PM2,5: {self.percent_pm25}%\n"
+        ret+= f"{self.text_gauge(value=self.percent_pm10)} PM10:  {self.percent_pm10}%\n"
+        ret+= f"{self.description}"
+        #ret+= f"{self.advice}"
         return ret
 
     def update(self):
@@ -228,7 +228,7 @@ class AirSegment(DisplaySegment):
                     self.temperature = measurement["value"]
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+#    logging.basicConfig(level=logging.DEBUG)
     segments = [
            ClockSegment(),
            WeatherSegment(),
